@@ -80,6 +80,7 @@ func (aw *ansiWriter) Write(p []byte) (total int, err error) {
 
 				// Write any non-ANSI characters encountered
 				if sequenceStart < i {
+					logrus.Debugln("NonAnsi ", p[sequenceStart:i], string(p[sequenceStart:i]))
 					count, err := aw.file.Write(p[sequenceStart:i])
 					total += count
 					if err != nil {
@@ -102,10 +103,15 @@ func (aw *ansiWriter) Write(p []byte) (total int, err error) {
 	//    non-ANSI characters; arriving here with remaining bytes means only non-ANSI
 	//    characters remain to be written
 	if !aw.inAnsiSequence && sequenceStart < len(p) {
+		logrus.Debugln("Remaining ", p[sequenceStart:], string(p[sequenceStart:]))
 		count, err := aw.file.Write(p[sequenceStart:])
 		total += count
 		if err != nil {
 			return total, err
+		}
+		info, err := GetConsoleScreenBufferInfo(aw.fd)
+		if err == nil {
+			logrus.Debugf("Info after remaining %v", info)
 		}
 	}
 
@@ -200,7 +206,7 @@ func (aw *ansiWriter) doAnsiCommand() (err error) {
 	}
 
 	ac := newAnsiCommand(aw.command)
-	logrus.Debugf("[windows] doAnsiCommand: Cmd(%v)", ac)
+	logrus.Debugf("[windows] doAnsiCommand: Cmd(%v) Info(%v)", ac, info)
 
 	switch ac.Command {
 	case "A", "B", "C", "D", "E", "F", "G":
@@ -219,6 +225,7 @@ func (aw *ansiWriter) doAnsiCommand() (err error) {
 		}
 
 		position := info.CursorPosition
+
 		if ac.Command == "C" || ac.Command == "D" {
 			position.X = addInRange(position.X, value, info.Window.Left, info.Window.Right)
 		} else if ac.Command == "G" {
@@ -424,6 +431,12 @@ func (aw *ansiWriter) doAnsiCommand() (err error) {
 
 		*/
 	}
+
+	info, err = GetConsoleScreenBufferInfo(aw.fd)
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("[windows] End doAnsiCommand: Info(%v)", info)
 
 	return nil
 }

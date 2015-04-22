@@ -250,13 +250,13 @@ func isCharacterSelectionCmdChar(b byte) bool {
 // always remain (without overflow) within the supplied min / max range.
 func addInRange(n SHORT, increment SHORT, min SHORT, max SHORT) SHORT {
 	n += increment
-	if increment >= 0 && (n < 0 || n > max) {
+	if n > max {
 		return max
-	} else if increment < 0 && (n > 0 || n < min) {
-		return min
-	} else {
-		return n
 	}
+	if n < min {
+		return min
+	}
+	return n
 }
 
 // bytesToHex converts a slice of bytes to a human-readable string.
