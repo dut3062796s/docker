@@ -430,6 +430,9 @@ func (aw *ansiWriter) doAnsiCommand() (err error) {
 		   ESC [ 14 ; n ]      Set the VESA powerdown interval in minutes.
 
 		*/
+
+	default:
+		logrus.Debugf("[windows] Unhandled ANSI command")
 	}
 
 	info, err = GetConsoleScreenBufferInfo(aw.fd)
