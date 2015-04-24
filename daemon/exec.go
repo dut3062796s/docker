@@ -9,7 +9,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
-	"github.com/docker/docker/daemon/execdriver/lxc"
 	"github.com/docker/docker/pkg/broadcastwriter"
 	"github.com/docker/docker/pkg/ioutils"
 	"github.com/docker/docker/pkg/promise"
@@ -112,8 +111,8 @@ func (d *Daemon) getActiveContainer(name string) (*Container, error) {
 
 func (d *Daemon) ContainerExecCreate(config *runconfig.ExecConfig) (string, error) {
 
-	if strings.HasPrefix(d.execDriver.Name(), lxc.DriverName) {
-		return "", lxc.ErrExec
+	if execSupportCheck := checkExecSupport(d.execDriver.Name()); execSupportCheck != nil {
+		return "", execSupportCheck
 	}
 
 	container, err := d.getActiveContainer(config.Container)
